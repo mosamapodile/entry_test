@@ -76,7 +76,7 @@ contract DecentralisedRaffle {
         require(block.timestamp >= raffleStartTime + RAFFLE_DURATION, "Raffle duration not met");
         require(uniquePlayerCount >= 3, "At least 3 unique players required");
 
-        // Pseudo-random index selection
+        // Pseudo-random index selection across all entries
         uint256 winningIndex = uint256(
             keccak256(abi.encodePacked(block.timestamp, block.prevrandao, players.length))
         ) % players.length;
@@ -87,19 +87,22 @@ contract DecentralisedRaffle {
         uint256 prize = (totalPot * 90) / 100;
         uint256 ownerFee = totalPot - prize;
 
-        emit WinnerSelected(raffleId, winner, prize);
+        uint256 currentRaffleId = raffleId;
 
-        // Reset state for next round
+        // Reset state for next round before interactions (CEI pattern)
         raffleId++;
         raffleStartTime = block.timestamp;
 
-        for (uint256 i = 0; i < players.length; i++) {
-            playerEntries[players[i]] = 0;
+        uint256 playerCount = players.length;
+        for (uint256 i = 0; i < playerCount; i++) {
+            delete playerEntries[players[i]];
         }
         delete players;
         uniquePlayerCount = 0;
 
-        // Payout transfers
+        emit WinnerSelected(currentRaffleId, winner, prize);
+
+        // External ETH Transfers
         (bool successWinner, ) = winner.call{value: prize}("");
         require(successWinner, "Winner transfer failed");
 
