@@ -56,11 +56,10 @@ database?"*
 - **D)** "Because a database can only handle a few thousand users, and
   blockchains scale infinitely."
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** B
 
 **Your Reasoning:**
-[2-3 sentences. What is the actual property a blockchain provides here? Name one
-honest cost of choosing it.]
+Blockchains provide trustlessness and immutability, ensuring no central administrator can alter historical data or edit records unilaterally. The primary cost is performance: blockchains are significantly slower and more expensive than centralized databases due to consensus overhead and global data replication. A database is preferable unless participants strictly require decentralized verification without relying on a central host.
 
 ---
 
@@ -79,16 +78,15 @@ You send a simple ETH transfer on Ethereum.
 - **C)** 0.00042 ETH (about $1.26)
 - **D)** 0.0042 ETH (about $12.60)
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** C
 
 **Your Calculation:**
 
-- Total gas cost in gwei = [show your working]
-- Converted to ETH (remember: 1 ETH = 1,000,000,000 gwei) = [show your working]
-- Converted to USD = [show your working]
+- Total gas cost in gwei = 21,000 gas * 20 gwei = 420,000 gwei
+- Converted to ETH (remember: 1 ETH = 1,000,000,000 gwei) = 420,000 / 1,000,000,000 = 0.00042 ETH
+- Converted to USD = 0.00042 ETH * $3,000 = $1.26
 
-[Then, in one or two sentences: why does a smart contract function that writes
-to storage cost far more than this simple transfer?]
+Smart contract functions that write to state storage are much more expensive because modifying storage (SSTORE) requires every node in the network to permanently retain and allocate disk memory for that state indefinitely.
 
 ---
 
@@ -109,12 +107,10 @@ Your smart contract needs to know the current ETH/USD price.
   in a future upgrade.
 - **D)** Because API providers block blockchain nodes for security reasons.
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** B
 
 **Your Reasoning:**
-[2-3 sentences. Why would a single company running the only oracle undermine the
-point of building on a blockchain? What does a decentralised oracle network do
-about that?]
+Smart contracts require strict determinism so that all validating nodes reach identical state results when processing a block. Direct off-chain HTTP requests are non-deterministic due to timing differences and dynamic API responses. Relying on a single centralized oracle introduces a single point of failure, whereas a decentralized oracle network aggregates responses across multiple node operators to deliver a consensus-backed value on-chain.
 
 ---
 
@@ -133,11 +129,10 @@ about that?]
   attacker their own stake. The cost of that stake is also what makes Sybil
   attacks - one actor spinning up thousands of fake nodes - uneconomic.
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** D
 
 **Your Reasoning:**
-[2-3 sentences. What does an attacker actually need to acquire to threaten a PoS
-chain, and what do they stand to lose? Name one difference from Proof of Work.]
+An attacker attempting a 51% attack on Proof of Stake must purchase and lock up a majority of all staked capital, incurring massive market costs. If they attempt malicious behavior like double-signing, their staked funds are permanently destroyed via slashing. Unlike Proof of Work which relies on hardware and energy consumption, PoS secures the network through direct cryptoeconomic penalties.
 
 ---
 
@@ -157,11 +152,10 @@ chain, and what do they stand to lose? Name one difference from Proof of Work.]
 - **D)** It reduces gas costs by lowering the base fee on Ethereum itself
   whenever the rollup is active.
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** A
 
 **Your Reasoning:**
-[2-3 sentences. Most rollups today run a single centralised sequencer. What can
-that sequencer do to you, and what can it *not* do?]
+A centralized sequencer can censor or reorder transaction execution (extracting MEV), but it cannot steal user funds or execute invalid state changes. This safety is guaranteed because state validity is ultimately proven on Layer 1 via validity proofs or guarded by fraud-proof challenge windows.
 
 ---
 
@@ -184,11 +178,10 @@ them.
 - **D)** The seed phrase is just a backup of your public address, which is why it
   is safe to share with support staff if you get stuck.
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** C
 
 **Your Reasoning:**
-[2-3 sentences. What does a signature prove? What is the trade-off a user accepts
-by holding their own keys, and what does account abstraction do to soften it?]
+A cryptographic signature proves ownership of the private key without exposing the key itself. The main trade-off of self-custody is absolute personal responsibility: if a key is lost or compromised, no authority can recover funds or reverse transactions. Account Abstraction mitigates this by allowing smart contract wallets to implement social recovery, multi-sig logic, and key rotation features.
 
 ---
 
@@ -223,12 +216,10 @@ uint256 index = uint256(
 - **D)** It is insecure on Ethereum but safe on a Layer 2, because the sequencer
   orders transactions privately.
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** B
 
 **Your Reasoning:**
-[2-3 sentences. Who specifically can manipulate this draw, and what would they
-have to do? You will implement this shortcut in Part B anyway - so be clear
-about what you are shipping.]
+The block validator proposing the block can calculate the winner off-chain before broadcasting. If the result does not benefit them, they can discard the block or reorder transactions within the block to manipulate prevrandao and timestamp. While we use this simple formula in Part B as a shortcut, production environments require off-chain Verifiable Random Functions (VRF).
 
 ---
 
@@ -262,22 +253,20 @@ function approveAndPay(uint256 bountyId, address freelancer) external {
 - **D)** The `require` on `msg.sender` should use `tx.origin` instead, so that
   contracts cannot call the function at all.
 
-**Your Answer:** [A/B/C/D]
+**Your Answer:** C
 
 **Your Reasoning:**
-[2-3 sentences. Walk through the exact sequence an attacking contract would use.
-Then apply the fix in your own `approveAndPay` - it is auto-marked.]
+An attacking contract set as the freelancer can trigger a fallback or receive() function upon receiving ETH that calls approveAndPay again before the original transaction finishes. Because b.status has not been updated to Completed, the require checks succeed repeatedly, draining contract balance. Applying the Checks-Effects-Interactions (CEI) pattern ensures b.status = Status.Completed is written before executing the low-level .call.
 
 ---
 
 ## SUBMISSION CHECKLIST
 
-- [ ] Every `**Your Answer:**` line contains a single letter and nothing else
-- [ ] You gave reasoning for all 8 questions
-- [ ] For Question 2 you showed your working
-- [ ] You committed and pushed to your fork
+- [x ] Every `**Your Answer:**` line contains a single letter and nothing else
+- [ x] You gave reasoning for all 8 questions
+- [ x] For Question 2 you showed your working
+- [ x] You committed and pushed to your fork
 
 ---
 
-**Challenges faced:** [What was difficult? Which concepts are you least
-confident about? Answering this honestly does not cost you marks.]
+**Challenges faced:** Balancing gas optimization against strict security constraints such as enforcing Checks-Effects-Interactions to prevent reentrancy requires precise function structuring. Additionally, evaluating the operational trade-offs of Layer 2 sequencers and understanding why block parameters are unsuitable for production randomness helped reinforce key protocol security principles
