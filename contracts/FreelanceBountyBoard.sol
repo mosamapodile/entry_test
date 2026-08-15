@@ -122,14 +122,36 @@ contract FreelanceBountyBoard {
     // TODO 4: submitWork
     // -----------------------------------------------------------------------
     function submitWork(uint256 bountyId, string calldata submissionUrl) external {
-        // Implemented in Commit 3
+        require(applications[bountyId][msg.sender], "Caller must have applied for this bounty");
+
+        Bounty storage bounty = bounties[bountyId];
+        require(bounty.status == Status.Open, "Bounty is not open");
+
+        bounty.status = Status.Submitted;
+
+        emit WorkSubmitted(bountyId, msg.sender, submissionUrl);
     }
 
     // -----------------------------------------------------------------------
     // TODO 5: approveAndPay
     // -----------------------------------------------------------------------
     function approveAndPay(uint256 bountyId, address freelancer) external {
-        // Implemented in Commit 3
+        Bounty storage bounty = bounties[bountyId];
+
+        require(msg.sender == bounty.employer, "Only employer can approve and pay");
+        require(bounty.status == Status.Submitted, "Bounty must be in Submitted status");
+        require(applications[bountyId][freelancer], "Freelancer did not apply for this bounty");
+
+        uint256 amountToPay = bounty.amount;
+
+        // Effect: Update status before interaction to prevent reentrancy
+        bounty.status = Status.Completed;
+
+        emit BountyPaid(bountyId, freelancer, amountToPay);
+
+        // Interaction: Send ETH safely
+        (bool ok, ) = freelancer.call{value: amountToPay}("");
+        require(ok, "Transfer failed");
     }
 
     // -----------------------------------------------------------------------
