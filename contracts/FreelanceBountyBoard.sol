@@ -20,6 +20,19 @@ contract FreelanceBountyBoard {
         Completed
     }
 
+    struct Freelancer {
+        string skill;
+        bool registered;
+    }
+
+    struct Bounty {
+        address employer;
+        string description;
+        string skillRequired;
+        uint256 amount;
+        Status status;
+    }
+
     // --- Events (the marker checks these are emitted) ---
 
     event FreelancerRegistered(address indexed freelancer, string skill);
@@ -33,12 +46,10 @@ contract FreelanceBountyBoard {
     /// @notice Total number of bounties ever posted. The first bounty has id 1.
     uint256 public bountyCount;
 
-    // TODO: Define the rest of your state variables here.
-    // Consider:
-    // - How do you record who is registered, and with which skill?
-    // - What does a bounty need to remember? (employer, description, skill,
-    //   amount, status) A struct is a good fit here.
-    // - How do you remember who applied for which bounty?
+    // State Mappings
+    mapping(address => Freelancer) private freelancers;
+    mapping(uint256 => Bounty) private bounties;
+    mapping(uint256 => mapping(address => bool)) private applications;
 
     constructor() {
         owner = msg.sender;
@@ -47,81 +58,48 @@ contract FreelanceBountyBoard {
     // -----------------------------------------------------------------------
     // TODO 1: registerFreelancer
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Store the caller's skill
-    // - Revert if the caller is already registered
-    // - Revert if the skill string is empty
-    // - Emit FreelancerRegistered(msg.sender, skill)
     function registerFreelancer(string calldata skill) external {
-        // Your implementation here
+        require(!freelancers[msg.sender].registered, "Already registered");
+        require(bytes(skill).length > 0, "Skill cannot be empty");
+
+        freelancers[msg.sender] = Freelancer({
+            skill: skill,
+            registered: true
+        });
+
+        emit FreelancerRegistered(msg.sender, skill);
     }
 
     // -----------------------------------------------------------------------
     // TODO 2: postBounty
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - The employer sends the reward as msg.value; revert if it is zero
-    // - Increment bountyCount; the new bounty's id is the new bountyCount
-    // - Store employer, description, skillRequired, amount, Status.Open
-    // - Emit BountyPosted(bountyId, msg.sender, msg.value)
-    // - Return the new bountyId
-    //
-    // Think: the ETH simply stays in this contract until approval. You do not
-    // need to send it anywhere yet.
     function postBounty(string calldata description, string calldata skillRequired)
         external
         payable
         returns (uint256)
     {
-        // Your implementation here
+        // To be implemented in Commit 2
     }
 
     // -----------------------------------------------------------------------
     // TODO 3: applyForBounty
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Caller must be a registered freelancer
-    // - The bounty must exist and still be Open
-    // - The caller's skill must match the bounty's skillRequired
-    // - Revert on a duplicate application
-    // - Emit AppliedForBounty(bountyId, msg.sender)
-    //
-    // Hint: Solidity cannot compare strings with ==. Compare hashes instead:
-    //   keccak256(bytes(a)) == keccak256(bytes(b))
     function applyForBounty(uint256 bountyId) external {
-        // Your implementation here
+        // To be implemented in Commit 2
     }
 
     // -----------------------------------------------------------------------
     // TODO 4: submitWork
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Caller must have applied for this bounty
-    // - The bounty must still be Open
-    // - Set the bounty's status to Submitted
-    // - Emit WorkSubmitted(bountyId, msg.sender, submissionUrl)
     function submitWork(uint256 bountyId, string calldata submissionUrl) external {
-        // Your implementation here
+        // To be implemented in Commit 3
     }
 
     // -----------------------------------------------------------------------
     // TODO 5: approveAndPay
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Only the employer who posted this bounty may call it
-    // - The bounty must be in Submitted status (so it cannot be paid twice)
-    // - Pay the full bounty amount to the freelancer
-    // - Emit BountyPaid(bountyId, freelancer, amount)
-    //
-    // SECURITY - this is the marked part:
-    // Use checks-effects-interactions. Set the status to Completed BEFORE
-    // sending the ETH, so a malicious freelancer contract cannot call back in
-    // and be paid twice. Send with:
-    //     (bool ok, ) = freelancer.call{value: amount}("");
-    //     require(ok, "Transfer failed");
-    // rather than transfer() or send().
     function approveAndPay(uint256 bountyId, address freelancer) external {
-        // Your implementation here
+        // To be implemented in Commit 3
     }
 
     // -----------------------------------------------------------------------
@@ -130,17 +108,17 @@ contract FreelanceBountyBoard {
 
     /// @notice True if this address has registered as a freelancer
     function isRegistered(address freelancer) external view returns (bool) {
-        // Your implementation here
+        return freelancers[freelancer].registered;
     }
 
     /// @notice The skill this freelancer registered with ("" if unregistered)
     function getSkill(address freelancer) external view returns (string memory) {
-        // Your implementation here
+        return freelancers[freelancer].skill;
     }
 
     /// @notice True if this freelancer applied for this bounty
     function hasApplied(uint256 bountyId, address freelancer) external view returns (bool) {
-        // Your implementation here
+        return applications[bountyId][freelancer];
     }
 
     /// @notice All of a bounty's details, in this exact order
@@ -155,10 +133,7 @@ contract FreelanceBountyBoard {
             Status status
         )
     {
-        // Your implementation here
+        Bounty memory b = bounties[bountyId];
+        return (b.employer, b.description, b.skillRequired, b.amount, b.status);
     }
-
-    // BONUS (not auto-marked, describe it in PartB_Design.md instead):
-    // What happens if the employer never approves work that was genuinely done?
-    // Sketch a timeout or dispute mechanism.
 }
