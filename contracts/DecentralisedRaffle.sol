@@ -31,13 +31,10 @@ contract DecentralisedRaffle {
     uint256 public raffleStartTime;
     bool public isPaused;
 
-    // TODO: Define the rest of your state variables here.
-    // Consider:
-    // - One call to enterRaffle() buys ONE entry, and a player may enter many
-    //   times. An array of addresses records every entry in order - the same
-    //   address simply appears more than once, which gives them better odds.
-    // - You also need the number of UNIQUE players, for the 3-player minimum.
-    // - The pot is just this contract's balance.
+    // State Variables
+    address[] private players;
+    mapping(address => uint256) private playerEntries;
+    uint256 private uniquePlayerCount;
 
     constructor() {
         owner = msg.sender;
@@ -59,59 +56,39 @@ contract DecentralisedRaffle {
     // -----------------------------------------------------------------------
     // TODO 1: enterRaffle
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Revert if msg.value is below MINIMUM_ENTRY
-    // - Revert while the raffle is paused
-    // - Record ONE entry for msg.sender (they may enter repeatedly)
-    // - If this is the caller's first ever entry this round, they are a new
-    //   unique player
-    // - Emit RaffleEntered(msg.sender, <this player's total entries so far>)
-    function enterRaffle() external payable {
-        // Your implementation here
+    function enterRaffle() external payable whenNotPaused {
+        require(msg.value >= MINIMUM_ENTRY, "Entry fee below minimum");
+
+        if (playerEntries[msg.sender] == 0) {
+            uniquePlayerCount++;
+        }
+
+        players.push(msg.sender);
+        playerEntries[msg.sender]++;
+
+        emit RaffleEntered(msg.sender, playerEntries[msg.sender]);
     }
 
     // -----------------------------------------------------------------------
     // TODO 2: selectWinner
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Only the owner may call it
-    // - Revert unless at least RAFFLE_DURATION has passed since raffleStartTime
-    // - Revert unless there are at least 3 UNIQUE players
-    // - Pick a winning index across ALL entries, so a player with 3 entries is
-    //   three times as likely to win as a player with 1
-    // - Pay 90% of the pot to the winner and 10% to the owner
-    // - Emit WinnerSelected(raffleId, winner, prizeAmount)
-    // - Reset for the next round: increment raffleId, clear the entries, and
-    //   set raffleStartTime to now
-    //
-    // MATHS: calculate the prize as (pot * 90) / 100. Multiply before you
-    // divide, or you will lose precision.
-    //
-    // RANDOMNESS - read this carefully, it is the point of the exercise:
-    // You will probably reach for something like
-    //     uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender)))
-    // That is ACCEPTABLE for this assessment, because a genuinely secure
-    // source (Chainlink VRF, commit-reveal) is beyond a 3-hour test. What is
-    // NOT acceptable is pretending it is secure. In PartB_Design.md you must
-    // explain who can manipulate your randomness, how, and what you would use
-    // in production instead. That explanation carries the marks here, not the
-    // code.
     function selectWinner() external onlyOwner {
-        // Your implementation here
+        // Implemented in Commit 2
     }
 
     // -----------------------------------------------------------------------
     // TODO 3: Circuit breaker
     // -----------------------------------------------------------------------
-    // Requirements:
-    // - Owner only, both functions
-    // - Set isPaused, and emit RafflePaused() / RaffleUnpaused()
     function pause() external onlyOwner {
-        // Your implementation
+        require(!isPaused, "Already paused");
+        isPaused = true;
+        emit RafflePaused();
     }
 
     function unpause() external onlyOwner {
-        // Your implementation
+        require(isPaused, "Not paused");
+        isPaused = false;
+        emit RaffleUnpaused();
     }
 
     // -----------------------------------------------------------------------
@@ -120,25 +97,21 @@ contract DecentralisedRaffle {
 
     /// @notice The current pot, in wei
     function getPot() external view returns (uint256) {
-        // Your implementation here
+        return address(this).balance;
     }
 
     /// @notice How many entries this player has bought this round
     function getEntryCount(address player) external view returns (uint256) {
-        // Your implementation here
+        return playerEntries[player];
     }
 
     /// @notice Total number of entries this round, counting repeats
     function getPlayerCount() external view returns (uint256) {
-        // Your implementation here
+        return players.length;
     }
 
     /// @notice Number of distinct addresses that have entered this round
     function getUniquePlayerCount() external view returns (uint256) {
-        // Your implementation here
+        return uniquePlayerCount;
     }
-
-    // BONUS (not auto-marked, describe it in PartB_Design.md instead):
-    // - Refund everyone if the raffle closes with fewer than 3 players
-    // - Multiple prize tiers (1st, 2nd, 3rd)
 }
