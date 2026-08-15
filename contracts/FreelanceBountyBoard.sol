@@ -78,28 +78,58 @@ contract FreelanceBountyBoard {
         payable
         returns (uint256)
     {
-        // To be implemented in Commit 2
+        require(msg.value > 0, "Bounty amount must be greater than zero");
+
+        bountyCount++;
+        uint256 newBountyId = bountyCount;
+
+        bounties[newBountyId] = Bounty({
+            employer: msg.sender,
+            description: description,
+            skillRequired: skillRequired,
+            amount: msg.value,
+            status: Status.Open
+        });
+
+        emit BountyPosted(newBountyId, msg.sender, msg.value);
+
+        return newBountyId;
     }
 
     // -----------------------------------------------------------------------
     // TODO 3: applyForBounty
     // -----------------------------------------------------------------------
     function applyForBounty(uint256 bountyId) external {
-        // To be implemented in Commit 2
+        require(freelancers[msg.sender].registered, "Must be a registered freelancer");
+
+        Bounty storage bounty = bounties[bountyId];
+        require(bounty.employer != address(0), "Bounty does not exist");
+        require(bounty.status == Status.Open, "Bounty is not open");
+
+        require(
+            keccak256(bytes(freelancers[msg.sender].skill)) == keccak256(bytes(bounty.skillRequired)),
+            "Skill does not match bounty requirement"
+        );
+
+        require(!applications[bountyId][msg.sender], "Already applied for this bounty");
+
+        applications[bountyId][msg.sender] = true;
+
+        emit AppliedForBounty(bountyId, msg.sender);
     }
 
     // -----------------------------------------------------------------------
     // TODO 4: submitWork
     // -----------------------------------------------------------------------
     function submitWork(uint256 bountyId, string calldata submissionUrl) external {
-        // To be implemented in Commit 3
+        // Implemented in Commit 3
     }
 
     // -----------------------------------------------------------------------
     // TODO 5: approveAndPay
     // -----------------------------------------------------------------------
     function approveAndPay(uint256 bountyId, address freelancer) external {
-        // To be implemented in Commit 3
+        // Implemented in Commit 3
     }
 
     // -----------------------------------------------------------------------
